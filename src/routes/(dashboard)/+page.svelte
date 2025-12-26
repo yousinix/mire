@@ -59,7 +59,7 @@
 
       <ul>
         {#each mutation.data.tasks as task}
-          <li>{task}</li>
+          <li>- {task}</li>
         {/each}
       </ul>
     </div>

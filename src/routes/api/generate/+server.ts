@@ -1,33 +1,61 @@
-import type { RequestHandler } from './$types';
+import { OPENAI_API_KEY } from '$env/static/private';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { ChatOpenAI } from '@langchain/openai';
 import { json } from '@sveltejs/kit';
+import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
-export interface GenerateResponse {
-  goal: string;
-  tasks: string[];
-}
+const requestSchema = z.object({
+  prompt: z.string().min(1).describe('The user-provided goal to be broken down into tasks')
+});
 
-export interface GenerateRequest {
-  prompt: string;
-}
+const responseSchema = z.object({
+  goal: z.string().describe('A clear, concise goal statement'),
+  tasks: z
+    .array(z.string())
+    .min(5)
+    .max(8)
+    .describe('A list of 5-8 specific, actionable tasks to achieve the goal')
+});
+
+export type GenerateRequest = z.infer<typeof requestSchema>;
+export type GenerateResponse = z.infer<typeof responseSchema>;
 
 export const POST: RequestHandler = async ({ request }) => {
-  const { prompt } = (await request.json()) as GenerateRequest;
+  try {
+    const body = await request.json();
+    const { prompt } = requestSchema.parse(body);
 
-  // Mock data response
-  const mockResponse: GenerateResponse = {
-    goal: `Achieve the following based on your prompt: "${prompt}"`,
-    tasks: [
-      'Research and gather relevant information',
-      'Create a detailed plan of action',
-      'Break down the goal into smaller tasks',
-      'Set realistic deadlines for each task',
-      'Execute the plan step by step',
-      'Monitor progress and adjust as needed'
-    ]
-  };
+    // Initialize the OpenAI model with structured output
+    const model = new ChatOpenAI({
+      modelName: 'gpt-5-mini',
+      apiKey: OPENAI_API_KEY
+    }).withStructuredOutput(responseSchema);
 
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+    const template = ChatPromptTemplate.fromMessages([
+      [
+        'system',
+        'You are a helpful assistant that breaks down goals into actionable tasks. ' +
+          'Given a user goal, generate a clear goal statement and a list of 5-8 specific, ' +
+          'actionable tasks to achieve it.'
+      ],
+      ['human', '{userPrompt}']
+    ]);
 
-  return json(mockResponse);
+    const chain = template.pipe(model);
+    const result = await chain.invoke({
+      userPrompt: prompt
+    });
+
+    return json(result);
+  } catch (error) {
+    console.error('Error generating tasks:', error);
+    return json(
+      {
+        goal: prompt,
+        tasks: ['Failed to generate tasks. Please try again.']
+      },
+      { status: 500 }
+    );
+  }
 };
