@@ -1,30 +1,16 @@
 <script lang="ts">
+  import { createFetch } from '$lib/api';
   import { createMutation } from '@tanstack/svelte-query';
-  import type { GenerateRequest, GenerateResponse } from '../api/generate/+server';
 
   let prompt = $state('');
 
-  const mutation = createMutation(() => ({
-    mutationFn: async (promptText: string): Promise<GenerateResponse> => {
-      const body: GenerateRequest = { prompt: promptText };
-
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate response');
-      }
-
-      return response.json() as Promise<GenerateResponse>;
-    }
+  const mGenerate = createMutation(() => ({
+    mutationFn: createFetch('/api/generate')
   }));
 
   function handleSubmit() {
     if (!prompt.trim()) return;
-    mutation.mutate(prompt);
+    mGenerate.mutate({ prompt: prompt.trim() });
   }
 </script>
 
@@ -34,31 +20,31 @@
       type="text"
       bind:value={prompt}
       placeholder="Enter your prompt..."
-      disabled={mutation.isPending}
+      disabled={mGenerate.isPending}
     />
-    <button type="submit" disabled={mutation.isPending || !prompt.trim()}>
-      {mutation.isPending ? 'Generating...' : 'Submit'}
+    <button type="submit" disabled={mGenerate.isPending || !prompt.trim()}>
+      {mGenerate.isPending ? 'Generating...' : 'Submit'}
     </button>
   </form>
 
-  {#if mutation.isPending}
+  {#if mGenerate.isPending}
     <div>
       <p>Loading...</p>
     </div>
   {/if}
 
-  {#if mutation.isError}
+  {#if mGenerate.isError}
     <div>
-      <p>Error: {mutation.error?.message || 'An error occurred'}</p>
+      <p>Error: {mGenerate.error?.message || 'An error occurred'}</p>
     </div>
   {/if}
 
-  {#if mutation.isSuccess && mutation.data}
+  {#if mGenerate.isSuccess && mGenerate.data}
     <div>
-      <p>{mutation.data.goal}</p>
+      <p>{mGenerate.data.goal}</p>
 
       <ul>
-        {#each mutation.data.tasks as task}
+        {#each mGenerate.data.tasks as task}
           <li>- {task}</li>
         {/each}
       </ul>

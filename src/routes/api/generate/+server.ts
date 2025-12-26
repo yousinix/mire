@@ -2,35 +2,19 @@ import { OPENAI_API_KEY } from '$env/static/private';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { ChatOpenAI } from '@langchain/openai';
 import { json } from '@sveltejs/kit';
-import { z } from 'zod';
 import type { RequestHandler } from './$types';
-
-const requestSchema = z.object({
-  prompt: z.string().min(1).describe('The user-provided goal to be broken down into tasks')
-});
-
-const responseSchema = z.object({
-  goal: z.string().describe('A clear, concise goal statement'),
-  tasks: z
-    .array(z.string())
-    .min(5)
-    .max(8)
-    .describe('A list of 5-8 specific, actionable tasks to achieve the goal')
-});
-
-export type GenerateRequest = z.infer<typeof requestSchema>;
-export type GenerateResponse = z.infer<typeof responseSchema>;
+import { schema } from './schema';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const body = await request.json();
-    const { prompt } = requestSchema.parse(body);
+    const { prompt } = schema.request.parse(body);
 
     // Initialize the OpenAI model with structured output
     const model = new ChatOpenAI({
       modelName: 'gpt-5-mini',
       apiKey: OPENAI_API_KEY
-    }).withStructuredOutput(responseSchema);
+    }).withStructuredOutput(schema.response);
 
     const template = ChatPromptTemplate.fromMessages([
       [
