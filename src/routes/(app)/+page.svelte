@@ -1,9 +1,8 @@
 <script lang="ts">
   import { createFetch } from '$lib/api';
-  import Card from '$lib/components/Card.svelte';
-  import CheckboxGroup from '$lib/components/CheckboxGroup.svelte';
   import { createMutation } from '@tanstack/svelte-query';
   import PromptInput from '$lib/components/PromptInput.svelte';
+  import TaskCard from '$lib/components/TaskCard.svelte';
 
   const mGenerate = createMutation(() => ({
     mutationFn: createFetch('/api/generate')
@@ -23,10 +22,12 @@
   <PromptInput
     loading={mGenerate.isPending}
     error={mGenerate.error?.message}
-    onSubmit={(value) => mGenerate.mutate({ prompt: value })}
+    onSubmit={(value) => mGenerate.mutate({ goal: value })}
   />
 
   {#if mGenerate.data}
-    <CheckboxGroup items={mGenerate.data.tasks} />
+    {#each mGenerate.data as task}
+      <TaskCard {task} />
+    {/each}
   {/if}
 </div>
