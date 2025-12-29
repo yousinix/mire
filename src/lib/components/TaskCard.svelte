@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Task } from '$lib/agents/workflow';
   import { COGNITIVE_CONSTRAINTS } from '$lib/agents/constraints';
+  import type { Task } from '$lib/agents/task';
   import Card from './Card.svelte';
 
   interface Props {

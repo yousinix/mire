@@ -1,33 +1,67 @@
 <script lang="ts">
-  import { createFetch } from '$lib/api';
-  import { createMutation } from '@tanstack/svelte-query';
+  import type { Task } from '$lib/agents/task';
+  import { createStream } from '$lib/stream.svelte';
   import PromptInput from '$lib/components/PromptInput.svelte';
   import TaskCard from '$lib/components/TaskCard.svelte';
+  import TaskCardSkeleton from '$lib/components/TaskCardSkeleton.svelte';
 
-  const mGenerate = createMutation(() => ({
-    mutationFn: createFetch('/api/generate')
-  }));
+  let tasks = $state<(Task | null)[]>([]);
+  const stream = createStream('/api/generate', {
+    onMutate() {
+      // Clear tasks when a new goal is submitted
+      tasks = [];
+    },
+    onData(event) {
+      switch (event.type) {
+        case 'enhancing':
+          // Initialize tasks array with nulls (skeleton placeholders)
+          tasks = Array(event.data.taskCount).fill(null);
+          break;
+        case 'task':
+          // Replace the skeleton at this index with the actual task
+          tasks[event.data.index] = event.data.task;
+          break;
+      }
+    }
+  });
+
+  const loadingMessage = $derived.by(() => {
+    switch (stream.event?.type) {
+      case 'decomposing':
+        return 'Breaking down into tasks...';
+      case 'enhancing':
+        return 'Applying cognitive enhancements...';
+      default:
+        return '';
+    }
+  });
 </script>
 
 <div class="mx-auto flex h-full w-200 flex-col gap-2 p-6">
   <h1
     class={{
-      'mb-4 text-2xl font-bold transition-[margin-top] duration-1000': true,
-      'mt-[30vh]': mGenerate.isPending || mGenerate.isIdle,
-      'mt-[15vh]': mGenerate.isSuccess
+      'mb-4 px-2 text-2xl font-bold transition-[margin-top] duration-1000': true,
+      'mt-[30vh]': stream.event === null, // Visually center when no event has occurred
+      'mt-[15vh]': stream.event !== null
     }}
   >
     mire
   </h1>
-  <PromptInput
-    loading={mGenerate.isPending}
-    error={mGenerate.error?.message}
-    onSubmit={(value) => mGenerate.mutate({ goal: value })}
-  />
+  <PromptInput loading={stream.isLoading} onSubmit={(prompt) => stream.mutate({ goal: prompt })} />
 
-  {#if mGenerate.data}
-    {#each mGenerate.data as task}
-      <TaskCard {task} />
-    {/each}
+  {#if loadingMessage}
+    <p class="animate-pulse px-2 text-sm text-neutral-400">{loadingMessage}</p>
   {/if}
+
+  {#if stream.error}
+    <p class="px-2 text-sm text-red-400">{stream.error}</p>
+  {/if}
+
+  {#each tasks as task, i (i)}
+    {#if task}
+      <TaskCard {task} />
+    {:else}
+      <TaskCardSkeleton />
+    {/if}
+  {/each}
 </div>

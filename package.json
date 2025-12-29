@@ -16,7 +16,6 @@
   "dependencies": {
     "@langchain/openai": "^1.2.0",
     "@lucide/svelte": "^0.562.0",
-    "@tanstack/svelte-query": "^6.0.10",
     "langchain": "^1.2.3",
     "zod": "^4.2.1"
   },

@@ -4,7 +4,6 @@
 
   interface Props {
     loading?: boolean;
-    error?: string;
     onSubmit: (value: string) => void;
   }
 
@@ -45,8 +44,4 @@
       <Send class="size-4" />
     </button>
   </div>
-
-  {#if props.error}
-    <p class="mt-2 text-red-400">{props.error}</p>
-  {/if}
 </Card>
