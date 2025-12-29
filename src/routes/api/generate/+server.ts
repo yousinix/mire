@@ -36,7 +36,6 @@ export const POST: RequestHandler = async ({ request }) => {
         for (let index = 0; index < injectionPromises.length; index++) {
           const task = await injectionPromises[index];
           send({ type: 'task', data: { index, task } });
-          await new Promise((r) => setTimeout(r, 500)); // slight delay for better UX
         }
 
         send({ type: 'done', data: undefined });

@@ -17,6 +17,7 @@
     "@langchain/openai": "^1.2.0",
     "@lucide/svelte": "^0.562.0",
     "langchain": "^1.2.3",
+    "tone": "^15.1.22",
     "zod": "^4.2.1"
   },
   "devDependencies": {
