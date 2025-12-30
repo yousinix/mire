@@ -3,7 +3,6 @@ import type { RequestHandler } from './$types';
 import { schema, type StreamEvent } from './schema';
 import { DecompositionAgent } from '$lib/agents/decomposition.agent';
 import { NeuroInjectionAgent } from '$lib/agents/neuro-injection.agent';
-import type { Task } from '$lib/agents/task';
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();
@@ -21,24 +20,26 @@ export const POST: RequestHandler = async ({ request }) => {
 
       try {
         // Phase 1: Decomposition
-        send({ type: 'decomposing', data: undefined });
+        send({ type: 'decomposing' });
         const regularTasks = await decompositionAgent.decompose(goal.trim());
+        regularTasks.forEach((task, index) => {
+          send({ type: 'regular-task', data: { index, task } });
+        });
 
-        // Phase 2: Enhancement - send task count first
+        // Phase 2: Enhancement
         // Start all enhancements in parallel for speed
-        send({ type: 'enhancing', data: { taskCount: regularTasks.length } });
-        const injectionPromises = regularTasks.map(async (regularTask) => {
-          const neuroTask = await neuroInjectionAgent.enhance(regularTask.text);
-          return { regular: regularTask, neuro: neuroTask } as Task;
+        send({ type: 'enhancing' });
+        const injections = regularTasks.map((regularTask) => {
+          return neuroInjectionAgent.enhance(regularTask.text);
         });
 
         // Stream results in order by awaiting promises sequentially
-        for (let index = 0; index < injectionPromises.length; index++) {
-          const task = await injectionPromises[index];
-          send({ type: 'task', data: { index, task } });
+        for (let index = 0; index < injections.length; index++) {
+          const neuroTask = await injections[index];
+          send({ type: 'neuro-task', data: { index, task: neuroTask } });
         }
 
-        send({ type: 'done', data: undefined });
+        send({ type: 'done' });
       } catch (error) {
         console.error('Error in streaming workflow:', error);
         send({ type: 'error', data: { message: 'Failed to process request. Please try again.' } });

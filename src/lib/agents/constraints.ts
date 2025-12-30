@@ -5,6 +5,7 @@
 
 export type CognitiveConstraint = {
   name: string;
+  icon: string;
   description: string;
   examples: string[];
 };
@@ -12,6 +13,7 @@ export type CognitiveConstraint = {
 export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   SPATIAL_REASONING: {
     name: 'Spatial Reasoning',
+    icon: '📦',
     description:
       'Requires visualizing and manipulating objects in 3D space, optimizing for volume and arrangement',
     examples: [
@@ -22,6 +24,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   PATTERN_RECOGNITION: {
     name: 'Pattern Recognition',
+    icon: '🔍',
     description: 'Requires identifying patterns, sequences, and categorization systems',
     examples: [
       'Sort by color gradient',
@@ -31,6 +34,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   MEMORY_CHALLENGE: {
     name: 'Memory Challenge',
+    icon: '🧠',
     description: 'Tasks that require memorization, recall, or working memory',
     examples: [
       'Do it without looking at the list after first read',
@@ -40,6 +44,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   MOTOR_SKILLS: {
     name: 'Motor Skills',
+    icon: '✋',
     description: 'Physical dexterity and precision challenges',
     examples: [
       'Use non-dominant hand only',
@@ -49,11 +54,13 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   SENSORY_CONSTRAINT: {
     name: 'Sensory Constraint',
+    icon: '👁️',
     description: 'Limiting sensory input to increase difficulty',
     examples: ['Do it blindfolded', 'Work in silence (no audio cues)', 'Use touch only']
   },
   NOVELTY: {
     name: 'Novelty',
+    icon: '✨',
     description: 'Adding creative or unusual approaches to standard tasks',
     examples: [
       'Invent a new categorization system',
@@ -63,6 +70,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   TIME_PRESSURE: {
     name: 'Time Pressure',
+    icon: '⏱️',
     description: 'Strict time limits that increase urgency and decision-making speed',
     examples: [
       'Complete in half the normal time',
@@ -72,6 +80,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   RESOURCE_LIMITATION: {
     name: 'Resource Limitation',
+    icon: '🎯',
     description: 'Restricting available tools or resources',
     examples: [
       'Use only 3 containers',
@@ -81,6 +90,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   PROBLEM_SOLVING: {
     name: 'Problem Solving',
+    icon: '🧩',
     description: 'Requires analytical thinking and strategy development',
     examples: [
       'Create a system that minimizes future effort',
@@ -90,6 +100,7 @@ export const COGNITIVE_CONSTRAINTS: Record<string, CognitiveConstraint> = {
   },
   PRECISION: {
     name: 'Precision',
+    icon: '🎯',
     description: 'Requires exactness and attention to detail',
     examples: [
       'Align items within millimeters',

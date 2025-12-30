@@ -1,45 +1,49 @@
 <script lang="ts">
-  import type { Task } from '$lib/agents/task';
-  import { createStream } from '$lib/stream.svelte';
+  import type { RegularTask } from '$lib/agents/decomposition.agent';
+  import type { NeuroTask } from '$lib/agents/neuro-injection.agent';
+  import NeuroTaskCard from '$lib/components/NeuroTaskCard.svelte';
   import PromptInput from '$lib/components/PromptInput.svelte';
-  import TaskCard from '$lib/components/TaskCard.svelte';
-  import TaskCardSkeleton from '$lib/components/TaskCardSkeleton.svelte';
+  import NeuroTaskCardSkeleton from '$lib/components/NeuroTaskCardSkeleton.svelte';
+  import { createStream } from '$lib/stream.svelte';
   import { onMount } from 'svelte';
   import * as Tone from 'tone';
 
-  const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'];
-
   let synth: Tone.Synth | null = null;
+  const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'];
   onMount(() => {
     synth = new Tone.Synth().toDestination();
   });
 
-  let tasks = $state<(Task | null)[]>([]);
+  let regularTasks = $state<RegularTask[]>([]);
+  let neuroTasks = $state<NeuroTask[]>([]);
+
   const stream = createStream('/api/generate', {
     onMutate() {
       // Clear tasks when a new goal is submitted
-      tasks = [];
+      regularTasks = [];
+      neuroTasks = [];
     },
     async onData(event) {
       switch (event.type) {
-        case 'enhancing':
-          // Initialize tasks array with nulls (skeleton placeholders)
-          tasks = Array(event.data.taskCount).fill(null);
+        case 'regular-task':
+          regularTasks.push(event.data.task);
           break;
-        case 'task':
-          // Replace the skeleton at this index with the actual task
-          tasks[event.data.index] = event.data.task;
 
-          if (synth) {
-            const note = notes[event.data.index % notes.length];
-            synth.triggerAttackRelease(note, '8n');
-          }
+        case 'neuro-task':
+          const note = notes[event.data.index % notes.length];
+          synth!.triggerAttackRelease(note, '8n');
 
+          neuroTasks.push(event.data.task);
           await new Promise((r) => setTimeout(r, 500)); // slight delay for better UX
+
           break;
       }
     }
   });
+
+  const startedEnhancing = $derived.by(
+    () => stream.event?.type === 'enhancing' || stream.event?.type === 'neuro-task'
+  );
 
   const loadingMessage = $derived.by(() => {
     switch (stream.event?.type) {
@@ -53,31 +57,33 @@
   });
 </script>
 
-<div class="mx-auto flex h-full w-200 flex-col gap-2 p-6">
-  <h1
-    class={{
-      'mb-4 px-2 text-2xl font-bold transition-[margin-top] duration-1000': true,
-      'mt-[30vh]': stream.event === null, // Visually center when no event has occurred
-      'mt-[15vh]': stream.event !== null
-    }}
-  >
-    mire
-  </h1>
+<div
+  class={{
+    'mx-auto flex h-full w-200 flex-col gap-2 p-6 transition-[padding] duration-1000': true,
+    'py-[30vh]': stream.event === null, // Visually center when no event has occurred
+    'py-[15vh]': stream.event !== null
+  }}
+>
+  <h1 class="mb-2 px-2 text-2xl font-bold">mire</h1>
   <PromptInput loading={stream.isLoading} onSubmit={(prompt) => stream.mutate({ goal: prompt })} />
-
-  {#if loadingMessage}
-    <p class="animate-pulse px-2 text-sm text-neutral-400">{loadingMessage}</p>
-  {/if}
+  <p class="animate-pulse px-2 text-sm text-neutral-400">{loadingMessage}</p>
 
   {#if stream.error}
     <p class="px-2 text-sm text-red-400">{stream.error}</p>
   {/if}
 
-  {#each tasks as task, i (i)}
-    {#if task}
-      <TaskCard {task} />
-    {:else}
-      <TaskCardSkeleton />
-    {/if}
+  {#each neuroTasks as task, i (i)}
+    <NeuroTaskCard
+      {task}
+      onToggleDone={(done) => {
+        synth!.triggerAttackRelease(done ? 'C4' : 'G4', '8n');
+      }}
+    />
   {/each}
+
+  {#if startedEnhancing}
+    {#each Array(regularTasks.length - neuroTasks.length) as _, i (i)}
+      <NeuroTaskCardSkeleton />
+    {/each}
+  {/if}
 </div>

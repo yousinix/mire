@@ -5,8 +5,11 @@ import { getRandomConstraint } from './constraints';
 
 export const neuroTaskSchema = z.object({
   text: z.string().describe('The rewritten task with the cognitive constraint applied'),
-  constraint: z.string().describe('The cognitive constraint that was applied to enhance the task'),
-  reasoning: z.string().describe('Brief explanation of how the constraint enhances the task')
+  reasoning: z.string().describe('Brief explanation of how the constraint enhances the task'),
+  constraint: z.object({
+    name: z.string().describe('Name of the cognitive constraint applied to the task'),
+    icon: z.string().describe('Icon representing the cognitive constraint')
+  })
 });
 
 export type NeuroTask = z.infer<typeof neuroTaskSchema>;
@@ -69,8 +72,11 @@ Output Format:
 
     return {
       text: result.enhancedTask,
-      constraint: constraint.name,
-      reasoning: result.reasoning
+      reasoning: result.reasoning,
+      constraint: {
+        name: constraint.name,
+        icon: constraint.icon
+      }
     };
   }
 }

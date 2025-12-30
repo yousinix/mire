@@ -4,7 +4,7 @@ import type { RouteId } from '$app/types';
 
 export type StreamEvent = {
   type: string;
-  data: unknown;
+  data?: unknown;
 };
 
 export type StreamSchema<

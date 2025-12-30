@@ -8,8 +8,8 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="h-scree text-gray-200">
-  <div class="relative z-1 h-screen p-4">
+<div class="min-h-screen text-gray-200">
+  <div class="min-h-screen relative z-1 p-4">
     {@render children()}
   </div>
   <GridPattern

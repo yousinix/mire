@@ -10,38 +10,32 @@
   let props: Props = $props();
   let value = $state('');
 
-  function handleSubmit() {
+  function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
     if (value.trim() && !props.loading) {
       props.onSubmit(value);
     }
   }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      handleSubmit();
-    }
-  }
 </script>
 
-<Card class="p-2">
-  <div class="flex items-end gap-2">
-    <textarea
-      bind:value
-      class="flex-1 resize-none border-none bg-transparent px-2 py-1 focus:ring-0 disabled:opacity-50"
-      placeholder="Enter your prompt..."
-      onkeydown={handleKeydown}
-      disabled={props.loading}
-      rows="3"
-    ></textarea>
+<Card class="px-3 py-2">
+  <form onsubmit={handleSubmit}>
+    <div class="flex items-center gap-2">
+      <input
+        bind:value
+        type="text"
+        class="flex-1 border-none bg-transparent focus:ring-0 disabled:opacity-50"
+        placeholder="What do you want to do today?"
+        disabled={props.loading}
+      />
 
-    <button
-      onclick={handleSubmit}
-      disabled={props.loading || !value.trim()}
-      class="rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      aria-label="Submit"
-    >
-      <Send class="size-4" />
-    </button>
-  </div>
+      <button
+        type="submit"
+        disabled={props.loading || !value.trim()}
+        class="cursor-pointer rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Send class="size-4" />
+      </button>
+    </div>
+  </form>
 </Card>
