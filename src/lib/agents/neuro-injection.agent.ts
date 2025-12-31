@@ -1,7 +1,7 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { z } from 'zod';
-import { getRandomConstraint } from './constraints';
+import { COGNITIVE_CONSTRAINTS } from './constraints';
 
 export const neuroTaskSchema = z.object({
   text: z.string().describe('The rewritten task with the cognitive constraint applied'),
@@ -22,10 +22,12 @@ export class NeuroInjectionAgent {
   constructor(private readonly apiKey: string) {}
 
   async enhance(task: string): Promise<NeuroTask> {
-    const constraint = getRandomConstraint();
     const outputSchema = z.object({
       enhancedTask: z.string().describe('The rewritten task with the cognitive constraint applied'),
-      reasoning: z.string().describe('Brief explanation of how the constraint enhances the task')
+      reasoning: z.string().describe('Brief explanation of how the constraint enhances the task'),
+      constraintName: z
+        .union(COGNITIVE_CONSTRAINTS.map((c) => z.literal(c.name)))
+        .describe('Name of the cognitive constraint applied to the task')
     });
 
     const model = new ChatOpenAI({
@@ -41,10 +43,9 @@ export class NeuroInjectionAgent {
         `
 You are a creative cognitive enhancement specialist. Your job is to take ordinary tasks and make them more engaging and challenging by applying cognitive constraints.
 
-Cognitive Constraint to Apply:
-Name: ${constraint.name}
-Description: ${constraint.description}
-Examples: ${constraint.examples.join(', ')}
+Cognitive Constraints to choose from:
+(Choose the most suitable one for the task)
+${COGNITIVE_CONSTRAINTS.map((c) => '- ' + c.name + ': ' + c.description).join('\n')}
 
 Guidelines:
 - Rewrite the task to incorporate the cognitive constraint naturally
@@ -60,22 +61,19 @@ Output Format:
       ],
       [
         'human',
-        'Original Task: {task}\n\nRewrite this task by applying the "{constraintName}" cognitive constraint.'
+        'Original Task: {task}\n\nRewrite this task by applying a suitable cognitive constraint.'
       ]
     ]);
 
     const chain = template.pipe(model);
-    const result = await chain.invoke({
-      task,
-      constraintName: constraint.name
-    });
+    const result = await chain.invoke({ task });
 
     return {
       text: result.enhancedTask,
       reasoning: result.reasoning,
       constraint: {
-        name: constraint.name,
-        icon: constraint.icon
+        name: result.constraintName,
+        icon: COGNITIVE_CONSTRAINTS.find((c) => c.name === result.constraintName)!.icon
       }
     };
   }
