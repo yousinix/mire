@@ -1,9 +1,9 @@
 <script lang="ts">
+  import type { CognitiveTask } from '$lib/agents/cognitification.agent';
   import type { RegularTask } from '$lib/agents/decomposition.agent';
-  import type { NeuroTask } from '$lib/agents/neuro-injection.agent';
-  import NeuroTaskCard from '$lib/components/NeuroTaskCard.svelte';
+  import CognitiveTaskCard from '$lib/components/CognitiveTaskCard.svelte';
+  import CognitiveTaskCardSkeleton from '$lib/components/CognitiveTaskCardSkeleton.svelte';
   import PromptInput from '$lib/components/PromptInput.svelte';
-  import NeuroTaskCardSkeleton from '$lib/components/NeuroTaskCardSkeleton.svelte';
   import { createStream } from '$lib/stream.svelte';
   import { onMount } from 'svelte';
   import * as Tone from 'tone';
@@ -15,13 +15,13 @@
   });
 
   let regularTasks = $state<RegularTask[]>([]);
-  let neuroTasks = $state<NeuroTask[]>([]);
+  let cognitiveTasks = $state<CognitiveTask[]>([]);
 
   const stream = createStream('/api/generate', {
     onMutate() {
       // Clear tasks when a new goal is submitted
       regularTasks = [];
-      neuroTasks = [];
+      cognitiveTasks = [];
     },
     async onData(event) {
       switch (event.type) {
@@ -29,11 +29,11 @@
           regularTasks.push(event.data.task);
           break;
 
-        case 'neuro-task':
+        case 'cognitive-task':
           const note = notes[event.data.index % notes.length];
           synth!.triggerAttackRelease(note, '8n');
 
-          neuroTasks.push(event.data.task);
+          cognitiveTasks.push(event.data.task);
           await new Promise((r) => setTimeout(r, 500)); // slight delay for better UX
 
           break;
@@ -41,15 +41,21 @@
     }
   });
 
-  const startedEnhancing = $derived.by(
-    () => stream.event?.type === 'enhancing' || stream.event?.type === 'neuro-task'
+  const startedCognitification = $derived.by(
+    () =>
+      (stream.event?.type === 'phase' && stream.event?.data === 'cognitification') ||
+      stream.event?.type === 'cognitive-task'
   );
 
   const loadingMessage = $derived.by(() => {
-    switch (stream.event?.type) {
-      case 'decomposing':
+    if (stream.event?.type !== 'phase') {
+      return '';
+    }
+
+    switch (stream.event.data) {
+      case 'decomposition':
         return 'Breaking down into tasks...';
-      case 'enhancing':
+      case 'cognitification':
         return 'Applying cognitive enhancements...';
       default:
         return '';
@@ -72,8 +78,8 @@
     <p class="px-2 text-sm text-red-400">{stream.error}</p>
   {/if}
 
-  {#each neuroTasks as task, i (i)}
-    <NeuroTaskCard
+  {#each cognitiveTasks as task, i (i)}
+    <CognitiveTaskCard
       {task}
       onToggleDone={(done) => {
         synth!.triggerAttackRelease(done ? 'C4' : 'G4', '8n');
@@ -81,9 +87,9 @@
     />
   {/each}
 
-  {#if startedEnhancing}
-    {#each Array(regularTasks.length - neuroTasks.length) as _, i (i)}
-      <NeuroTaskCardSkeleton />
+  {#if startedCognitification}
+    {#each Array(regularTasks.length - cognitiveTasks.length) as _, i (i)}
+      <CognitiveTaskCardSkeleton />
     {/each}
   {/if}
 </div>

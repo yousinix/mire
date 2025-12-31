@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { NeuroTask } from '$lib/agents/neuro-injection.agent';
+  import type { CognitiveTask } from '$lib/agents/cognitification.agent';
   import Card from './Card.svelte';
 
   interface Props {
-    task: NeuroTask;
+    task: CognitiveTask;
     onToggleDone?: (done: boolean) => void;
   }
 

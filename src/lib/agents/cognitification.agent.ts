@@ -3,7 +3,7 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { z } from 'zod';
 import { COGNITIVE_CONSTRAINTS } from './constraints';
 
-export const neuroTaskSchema = z.object({
+export const cognitiveTaskSchema = z.object({
   text: z.string().describe('The rewritten task with the cognitive constraint applied'),
   reasoning: z.string().describe('Brief explanation of how the constraint enhances the task'),
   constraint: z.object({
@@ -12,18 +12,18 @@ export const neuroTaskSchema = z.object({
   })
 });
 
-export type NeuroTask = z.infer<typeof neuroTaskSchema>;
+export type CognitiveTask = z.infer<typeof cognitiveTaskSchema>;
 
 /**
- * Agent B: Neuro-Injection Agent
+ * Agent B: Cognitification Agent
  * Applies cognitive constraints to make tasks more challenging and engaging
  */
-export class NeuroInjectionAgent {
+export class CognitificationAgent {
   constructor(private readonly apiKey: string) {}
 
-  async enhance(task: string): Promise<NeuroTask> {
+  async enhance(task: string): Promise<CognitiveTask> {
     const outputSchema = z.object({
-      enhancedTask: z.string().describe('The rewritten task with the cognitive constraint applied'),
+      text: z.string().describe('The rewritten task with the cognitive constraint applied'),
       reasoning: z.string().describe('Brief explanation of how the constraint enhances the task'),
       constraintName: z
         .union(COGNITIVE_CONSTRAINTS.map((c) => z.literal(c.name)))
@@ -67,13 +67,14 @@ Output Format:
 
     const chain = template.pipe(model);
     const result = await chain.invoke({ task });
+    const constraint = COGNITIVE_CONSTRAINTS.find((c) => c.name === result.constraintName)!;
 
     return {
-      text: result.enhancedTask,
+      text: result.text,
       reasoning: result.reasoning,
       constraint: {
-        name: result.constraintName,
-        icon: COGNITIVE_CONSTRAINTS.find((c) => c.name === result.constraintName)!.icon
+        name: constraint.name,
+        icon: constraint.icon
       }
     };
   }

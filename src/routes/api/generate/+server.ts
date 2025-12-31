@@ -1,15 +1,15 @@
 import { OPENAI_API_KEY } from '$env/static/private';
+import { CognitificationAgent } from '$lib/agents/cognitification.agent';
+import { DecompositionAgent } from '$lib/agents/decomposition.agent';
 import type { RequestHandler } from './$types';
 import { schema, type StreamEvent } from './schema';
-import { DecompositionAgent } from '$lib/agents/decomposition.agent';
-import { NeuroInjectionAgent } from '$lib/agents/neuro-injection.agent';
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();
   const { goal } = schema.request.parse(body);
 
   const decompositionAgent = new DecompositionAgent(OPENAI_API_KEY);
-  const neuroInjectionAgent = new NeuroInjectionAgent(OPENAI_API_KEY);
+  const cognitificationAgent = new CognitificationAgent(OPENAI_API_KEY);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -20,23 +20,23 @@ export const POST: RequestHandler = async ({ request }) => {
 
       try {
         // Phase 1: Decomposition
-        send({ type: 'decomposing' });
+        send({ type: 'phase', data: 'decomposition' });
         const regularTasks = await decompositionAgent.decompose(goal.trim());
         regularTasks.forEach((task, index) => {
           send({ type: 'regular-task', data: { index, task } });
         });
 
-        // Phase 2: Enhancement
+        // Phase 2: Cognitification
         // Start all enhancements in parallel for speed
-        send({ type: 'enhancing' });
-        const injections = regularTasks.map((regularTask) => {
-          return neuroInjectionAgent.enhance(regularTask.text);
+        send({ type: 'phase', data: 'cognitification' });
+        const cognitifications = regularTasks.map((regularTask) => {
+          return cognitificationAgent.enhance(regularTask.text);
         });
 
         // Stream results in order by awaiting promises sequentially
-        for (let index = 0; index < injections.length; index++) {
-          const neuroTask = await injections[index];
-          send({ type: 'neuro-task', data: { index, task: neuroTask } });
+        for (let index = 0; index < cognitifications.length; index++) {
+          const cognitiveTask = await cognitifications[index];
+          send({ type: 'cognitive-task', data: { index, task: cognitiveTask } });
         }
 
         send({ type: 'done' });
