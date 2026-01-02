@@ -57,18 +57,15 @@
     }
   });
 
-  const startedCognitification = $derived.by(
-    () =>
-      (stream.event?.type === 'phase' && stream.event?.data === 'cognitification') ||
-      stream.event?.type === 'cognitive-task'
+  const startedCognitification = $derived.by(() =>
+    stream.events.some((e) => e.type === 'phase' && e.data === 'cognitification')
   );
 
   const loadingMessage = $derived.by(() => {
-    if (stream.event?.type !== 'phase') {
-      return '';
-    }
+    const lastEvent = stream.events.at(-1);
+    if (lastEvent?.type !== 'phase') return '';
 
-    switch (stream.event.data) {
+    switch (lastEvent.data) {
       case 'decomposition':
         return 'Breaking down into tasks...';
       case 'cognitification':
@@ -82,8 +79,8 @@
 <div
   class={{
     'mx-auto flex h-full w-200 flex-col gap-2 p-6 transition-[padding] duration-1000': true,
-    'py-[30vh]': stream.event === null, // Visually center when no event has occurred
-    'py-[15vh]': stream.event !== null
+    'py-[30vh]': stream.events.length === 0, // Visually center when no event has occurred
+    'py-[15vh]': stream.events.length !== 0
   }}
 >
   <button
@@ -101,7 +98,7 @@
     }}
   />
 
-  {#if !prompt && !stream.event}
+  {#if !prompt && stream.events.length === 0}
     <Card class="px-2 py-3">
       {#each sessionManager.sessions.slice(0, 5) as session, i (i)}
         <button

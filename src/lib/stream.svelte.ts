@@ -34,7 +34,7 @@ export type CreateStreamOptions<TRoute extends Route> = {
 
 export type CreateStreamResult<TRoute extends Route> = {
   mutate: (body: RequestOf<TRoute>) => Promise<void>;
-  event: EventsOf<TRoute> | null;
+  events: EventsOf<TRoute>[];
   isLoading: boolean;
   error: string | null;
 };
@@ -48,14 +48,14 @@ export function createStream<TRoute extends Route>(
 ): CreateStreamResult<TRoute> {
   const schema = streamSchema[route] as StreamSchema;
 
-  let event: EventsOf<TRoute> | null = $state(null);
+  let events: EventsOf<TRoute>[] = $state([]);
   let error: string | null = $state(null);
   let isLoading = $state(false);
 
   const mutate = async (body: RequestOf<TRoute>) => {
-    isLoading = true;
-    event = null;
+    events = [];
     error = null;
+    isLoading = true;
 
     try {
       const parsedBody = schema.request.parse(body);
@@ -85,7 +85,7 @@ export function createStream<TRoute extends Route>(
           const parsedEvent = JSON.parse(json) as EventsOf<TRoute>;
           const eventType = parsedEvent.type;
 
-          event = parsedEvent;
+          events = [...events, parsedEvent];
           await options.onData?.(parsedEvent);
 
           if (eventType === 'done') {
@@ -112,8 +112,8 @@ export function createStream<TRoute extends Route>(
 
   return {
     mutate,
-    get event() {
-      return event;
+    get events() {
+      return events;
     },
     get isLoading() {
       return isLoading;
