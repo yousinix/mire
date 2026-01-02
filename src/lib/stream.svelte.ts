@@ -29,6 +29,7 @@ type EventsOf<T extends Route> = z.infer<(typeof streamSchema)[T]['events']>;
 export type CreateStreamOptions<TRoute extends Route> = {
   onMutate?: () => void;
   onData?: (event: EventsOf<TRoute>) => void | Promise<void>;
+  onDone?: () => void;
 };
 
 export type CreateStreamResult<TRoute extends Route> = {
@@ -89,6 +90,7 @@ export function createStream<TRoute extends Route>(
 
           if (eventType === 'done') {
             isLoading = false;
+            options.onDone?.();
           }
 
           if (eventType === 'error') {

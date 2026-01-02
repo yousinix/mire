@@ -9,7 +9,7 @@
 
   let { task = $bindable(), onToggleDone }: Props = $props();
 
-  let done = $state(false);
+  let done = $state(task.done);
   let showTooltip = $state(false);
 
   function handleDoneChanged(e: Event) {

@@ -3,12 +3,12 @@
   import Card from './Card.svelte';
 
   interface Props {
+    value: string;
     loading?: boolean;
     onSubmit: (value: string) => void;
   }
 
-  let props: Props = $props();
-  let value = $state('');
+  let { value = $bindable(), ...props }: Props = $props();
 
   function handleSubmit(event: SubmitEvent) {
     event.preventDefault();

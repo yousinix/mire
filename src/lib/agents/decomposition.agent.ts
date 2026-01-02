@@ -3,7 +3,8 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { z } from 'zod';
 
 export const regularTaskSchema = z.object({
-  text: z.string().describe('The original task without enhancements')
+  text: z.string().describe('The original task without enhancements'),
+  done: z.boolean().default(false).describe('Whether the task is completed')
 });
 
 export type RegularTask = z.infer<typeof regularTaskSchema>;
@@ -49,6 +50,6 @@ Guidelines:
     const chain = template.pipe(model);
     const result = await chain.invoke({ goal });
 
-    return result.tasks.map((text) => ({ text }));
+    return result.tasks.map((text) => ({ text, done: false }));
   }
 }

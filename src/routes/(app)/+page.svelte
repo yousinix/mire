@@ -1,10 +1,13 @@
 <script lang="ts">
   import type { CognitiveTask } from '$lib/agents/cognitification.agent';
   import type { RegularTask } from '$lib/agents/decomposition.agent';
+  import Card from '$lib/components/Card.svelte';
   import CognitiveTaskCard from '$lib/components/CognitiveTaskCard.svelte';
   import CognitiveTaskCardSkeleton from '$lib/components/CognitiveTaskCardSkeleton.svelte';
   import PromptInput from '$lib/components/PromptInput.svelte';
+  import { createSessionManager } from '$lib/session/session-manager.svelte';
   import { createStream } from '$lib/stream.svelte';
+  import { ChevronRight } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import * as Tone from 'tone';
 
@@ -14,6 +17,9 @@
     synth = new Tone.Synth().toDestination();
   });
 
+  const sessionManager = createSessionManager();
+
+  let prompt = $state('');
   let regularTasks = $state<RegularTask[]>([]);
   let cognitiveTasks = $state<CognitiveTask[]>([]);
 
@@ -22,6 +28,7 @@
       // Clear tasks when a new goal is submitted
       regularTasks = [];
       cognitiveTasks = [];
+      sessionManager.reset();
     },
     async onData(event) {
       switch (event.type) {
@@ -38,6 +45,15 @@
 
           break;
       }
+    },
+    onDone() {
+      // Create a new session with all the data,
+      // after the stream is done
+      sessionManager.new({
+        prompt: prompt,
+        regularTasks: regularTasks,
+        cognitiveTasks: cognitiveTasks
+      });
     }
   });
 
@@ -70,19 +86,56 @@
     'py-[15vh]': stream.event !== null
   }}
 >
-  <h1 class="mb-2 px-2 text-2xl font-bold">mire</h1>
-  <PromptInput loading={stream.isLoading} onSubmit={(prompt) => stream.mutate({ goal: prompt })} />
-  <p class="animate-pulse px-2 text-sm text-neutral-400">{loadingMessage}</p>
+  <button
+    class="mb-2 flex cursor-pointer px-2 text-2xl font-bold"
+    onclick={() => location.reload()}
+  >
+    <h1>mire</h1>
+  </button>
+  <PromptInput
+    value={prompt}
+    loading={stream.isLoading}
+    onSubmit={(value) => {
+      prompt = value;
+      stream.mutate({ goal: value });
+    }}
+  />
 
-  {#if stream.error}
-    <p class="px-2 text-sm text-red-400">{stream.error}</p>
+  {#if !prompt && !stream.event}
+    <Card class="px-2 py-3">
+      {#each sessionManager.sessions.slice(0, 5) as session, i (i)}
+        <button
+          class="flex w-full cursor-pointer items-center justify-between rounded px-4 py-1 text-neutral-400 hover:bg-neutral-800/70"
+          onclick={() => {
+            prompt = session.prompt;
+            regularTasks = session.regularTasks;
+            cognitiveTasks = session.cognitiveTasks;
+            sessionManager.load(session.key);
+          }}
+        >
+          <p>{session.prompt}</p>
+          <ChevronRight class="size-5" />
+        </button>
+      {/each}
+    </Card>
   {/if}
+
+  <p class="px-2 text-sm">
+    {#if stream.error}
+      <span class="text-red-400">{stream.error}</span>
+    {:else}
+      <span class="animate-pulse text-neutral-400">{loadingMessage}</span>
+    {/if}
+  </p>
 
   {#each cognitiveTasks as task, i (i)}
     <CognitiveTaskCard
       {task}
       onToggleDone={(done) => {
         synth!.triggerAttackRelease(done ? 'C4' : 'G4', '8n');
+        sessionManager.current!.update((s) => {
+          s.cognitiveTasks[i].done = done;
+        });
       }}
     />
   {/each}

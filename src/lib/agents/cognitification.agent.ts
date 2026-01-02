@@ -6,10 +6,11 @@ import { COGNITIVE_CONSTRAINTS } from './constraints';
 export const cognitiveTaskSchema = z.object({
   text: z.string().describe('The rewritten task with the cognitive constraint applied'),
   reasoning: z.string().describe('Brief explanation of how the constraint enhances the task'),
+  done: z.boolean().default(false).describe('Whether the task is completed'),
   constraint: z.object({
     name: z.string().describe('Name of the cognitive constraint applied to the task'),
     icon: z.string().describe('Icon representing the cognitive constraint')
-  })
+  }),
 });
 
 export type CognitiveTask = z.infer<typeof cognitiveTaskSchema>;
@@ -72,6 +73,7 @@ Output Format:
     return {
       text: result.text,
       reasoning: result.reasoning,
+      done: false,
       constraint: {
         name: constraint.name,
         icon: constraint.icon
