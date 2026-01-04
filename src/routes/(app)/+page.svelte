@@ -98,7 +98,7 @@
     }}
   />
 
-  {#if !prompt && stream.events.length === 0}
+  {#if !prompt && stream.events.length === 0 && sessionManager.sessions.length > 0}
     <Card class="px-2 py-3">
       {#each sessionManager.sessions.slice(0, 5) as session, i (i)}
         <button
